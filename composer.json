@@ -1,0 +1,6 @@
+{
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.7",
+        "chillerlan/php-qrcode": "^5.0"
+    }
+}

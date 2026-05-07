@@ -1,0 +1,14 @@
+# PHP logs
+*.log
+error_log
+
+# XAMPP/OS files
+.DS_Store
+Thumbs.db
+
+# Composer (if used)
+vendor/
+
+# Temporary files
+*.tmp
+*.bak
