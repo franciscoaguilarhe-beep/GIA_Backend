@@ -49,19 +49,125 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ---- Control de Modales con ESC ----
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
-            closeModal();
+        if (e.key === 'Escape') {
+            const authModal = document.getElementById('authModal');
+            if (authModal && authModal.style.display === 'flex') {
+                authModal.style.display = 'none';
+                return;
+            }
+            const notaModal = document.getElementById('notaModal');
+            if (notaModal && notaModal.style.display === 'flex') {
+                cerrarNotaModal();
+                return;
+            }
+            if (modal && modal.style.display === 'flex') {
+                closeModal();
+            }
         }
     });
 
-    /* 
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
+    // ---- Eventos del Modal de Nota Popup ----
+    const btnCloseNotaModal = document.getElementById('btnCloseNotaModal');
+    const btnCancelNotaModal = document.getElementById('btnCancelNotaModal');
+    const btnEditNotaModal = document.getElementById('btnEditNotaModal');
+    const btnDeleteNotaModal = document.getElementById('btnDeleteNotaModal');
+    const formNotaModal = document.getElementById('formNotaModal');
+
+    if (btnCloseNotaModal) btnCloseNotaModal.addEventListener('click', cerrarNotaModal);
+    if (btnCancelNotaModal) btnCancelNotaModal.addEventListener('click', cerrarNotaModal);
+
+    if (btnEditNotaModal) {
+        btnEditNotaModal.addEventListener('click', () => {
+            activarEdicionNota();
         });
     }
-    */
+
+    if (btnDeleteNotaModal) {
+        btnDeleteNotaModal.addEventListener('click', async () => {
+            const idNota = document.getElementById('notaModalIdNota').value;
+            const cat = document.getElementById('notaModalCat').value;
+            const idActivo = document.getElementById('notaModalIdActivo').value;
+
+            if (!idNota) return;
+
+            if (!confirm('¿Estás seguro de que deseas eliminar esta nota?')) return;
+            const matricula = await solicitarMatricula('Ingrese su matrícula para confirmar la eliminación de la nota:');
+            if (!matricula) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id_nota', idNota);
+                formData.append('matricula', matricula);
+
+                const res = await fetch('api/notas.php', { method: 'POST', body: formData });
+                const result = await res.json();
+
+                if (result.success) {
+                    cerrarNotaModal();
+                    await fetchAndRenderNotesTags(cat, idActivo);
+                } else {
+                    alert(result.error || 'Error al eliminar nota.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión con el servidor.');
+            }
+        });
+    }
+
+    if (formNotaModal) {
+        formNotaModal.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const mode = document.getElementById('notaModalMode').value;
+            const idNota = document.getElementById('notaModalIdNota').value;
+            const cat = document.getElementById('notaModalCat').value;
+            const idActivo = document.getElementById('notaModalIdActivo').value;
+            const titulo = document.getElementById('notaModalInputTitulo').value.trim();
+            const fecha = document.getElementById('notaModalInputFecha').value.trim();
+            const nota = document.getElementById('notaModalInputContenido').value.trim();
+
+            if (!titulo || !nota) {
+                alert('Por favor complete el título y la descripción de la nota.');
+                return;
+            }
+
+            const promptMsg = mode === 'edit' 
+                ? 'Ingrese su matrícula para autorizar la modificación de la nota:' 
+                : 'Ingrese su matrícula para registrar la nueva nota:';
+
+            const matricula = await solicitarMatricula(promptMsg);
+            if (!matricula) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('action', mode === 'edit' ? 'update' : 'add');
+                if (mode === 'edit') formData.append('id_nota', idNota);
+                formData.append('categoria', cat);
+                formData.append('id_activo', idActivo);
+                formData.append('titulo', titulo);
+                formData.append('fecha', fecha);
+                formData.append('nota', nota);
+                formData.append('matricula', matricula);
+
+                const res = await fetch('api/notas.php', { method: 'POST', body: formData });
+                const result = await res.json();
+
+                if (result.success) {
+                    cerrarNotaModal();
+                    await fetchAndRenderNotesTags(cat, idActivo);
+                } else {
+                    alert(result.error || 'Error al procesar la nota.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión con el servidor.');
+            }
+        });
+    }
 
     // ---- Búsqueda Local (Filtrado de Tabla) ----
     const localSearchInput = document.getElementById('localSearch');
@@ -77,10 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if(formFichaTecnica) {
+    if (formFichaTecnica) {
         formFichaTecnica.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Solicitar matrícula antes de guardar
+            const matricula = await solicitarMatricula('Ingrese su matrícula para autorizar y guardar los cambios:');
+            if (!matricula) return;
+
             const formData = new FormData(formFichaTecnica);
+            formData.append('matricula_responsable', matricula);
+
             try {
                 const response = await fetch('api/save_activo.php', {
                     method: 'POST',
@@ -138,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             window.globalUnidades = data;
         });
+
     // ---- Administrative Management Search ----
     const handleAdminSearch = (inputId, bodyId) => {
         const input = document.getElementById(inputId);
@@ -165,10 +279,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!id || !cat) return;
             
             if (confirm(`¿Estás seguro de que deseas eliminar este registro de ${cat.toUpperCase()}? Esta acción no se puede deshacer.`)) {
+                // Solicitar matrícula antes de eliminar
+                const matricula = await solicitarMatricula('Ingrese su matrícula para confirmar la eliminación:');
+                if (!matricula) return;
+
                 try {
                     const formData = new FormData();
                     formData.append('id', id);
+                    formData.append('entity_cat', cat);
                     formData.append('categoria', cat);
+                    formData.append('matricula_responsable', matricula);
                     
                     const response = await fetch('api/delete_item.php', {
                         method: 'POST',
@@ -189,6 +309,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ---- Solicitud de Matrícula (Modal) ----
+function solicitarMatricula(promptMsg = 'Ingrese su matrícula para confirmar la acción:') {
+    return new Promise((resolve) => {
+        const authModal = document.getElementById('authModal');
+        const promptEl = document.getElementById('authModalPrompt');
+        const inputEl = document.getElementById('inputAuthMatricula');
+        const btnCancel = document.getElementById('btnCancelAuth');
+        const formAuth = document.getElementById('formAuthModal');
+
+        if (!authModal || !inputEl) {
+            const mat = prompt(promptMsg);
+            return resolve(mat ? mat.trim() : null);
+        }
+
+        promptEl.textContent = promptMsg;
+        inputEl.value = '';
+        authModal.style.display = 'flex';
+        inputEl.focus();
+
+        const cleanup = () => {
+            authModal.style.display = 'none';
+            btnCancel.onclick = null;
+            formAuth.onsubmit = null;
+        };
+
+        btnCancel.onclick = () => {
+            cleanup();
+            resolve(null);
+        };
+
+        formAuth.onsubmit = (e) => {
+            e.preventDefault();
+            const val = inputEl.value.trim();
+            if (!val) {
+                alert('Debe ingresar una matrícula válida.');
+                return;
+            }
+            cleanup();
+            resolve(val);
+        };
+    });
+}
 
 // ---- Funciones Globales ----
 
@@ -239,8 +402,11 @@ function getIconForCategory(cat) {
         case 'impresoras': return 'ph-printer';
         case 'televisiones': return 'ph-monitor';
         case 'telefonia': return 'ph-phone';
-        case 'red': return 'ph-hard-drives';
+        case 'red': 
+        case 'redes': return 'ph-hard-drives';
         case 'consumibles': return 'ph-battery-full';
+        case 'unidades': return 'ph-buildings';
+        case 'empleados': return 'ph-user';
         default: return 'ph-cube';
     }
 }
@@ -254,7 +420,9 @@ function openFichaTecnica(id, categoria) {
     const modal = document.getElementById('fichaModal');
     const modalBody = document.getElementById('modalBody');
     const modalTitle = document.getElementById('modalTitle');
-    document.getElementById('formFichaTecnica').classList.remove('edit-mode');
+    const form = document.getElementById('formFichaTecnica');
+    if (form) form.classList.remove('edit-mode');
+
     modalTitle.textContent = `Ficha Técnica - ${categoria.toUpperCase()}`;
     modalBody.innerHTML = '<div style="text-align:center; padding:20px;"><i class="ph ph-spinner ph-spin"></i> Cargando...</div>';
     const btnDelete = document.getElementById('btnDeleteModal');
@@ -270,8 +438,11 @@ function openFichaTecnica(id, categoria) {
             return res.json();
         })
         .then(data => {
-            console.log('Datos recibidos:', data);
             renderModalContent(data, categoria, modalBody);
+            // Cargar y mostrar bitácora de notas como botones / etiquetas
+            if (id > 0) {
+                loadAndRenderNotas(categoria, id, modalBody);
+            }
         })
         .catch(err => {
             console.error('Error cargando ficha:', err);
@@ -417,6 +588,13 @@ function renderModalContent(data, categoria, container) {
                 fields: ['matricula', 'nombre', 'usuario', 'categoria', 'unidad', 'password']
             }
         };
+    } else if (categoria === 'unidades') {
+        sections = {
+            'Datos Generales': {
+                icon: 'ph-buildings',
+                fields: ['clave', 'unidad', 'zona']
+            }
+        };
     }
 
     let html = '';
@@ -534,10 +712,8 @@ function renderModalContent(data, categoria, container) {
                         if (catInput) catInput.value = emp.categoria || '';
                         if (domInput && emp.cuenta) domInput.value = emp.cuenta;
                         
-                        // Notify user or visual feedback
                         matriculaInput.style.borderColor = 'var(--primary-color)';
                     } else if (emp.not_found) {
-                        // User can add new employee manually
                         console.log('Empleado no encontrado, proceda a agregar manualmente.');
                         matriculaInput.style.borderColor = 'var(--warning-color)';
                     }
@@ -547,6 +723,244 @@ function renderModalContent(data, categoria, container) {
             }
         });
     }
+}
+
+// ---- Bitácora de Notas (Visualización con Botones / Etiquetas y Popup) ----
+
+async function loadAndRenderNotas(categoria, id, container) {
+    let notesSection = container.querySelector('.section-notes');
+    if (!notesSection) {
+        notesSection = document.createElement('div');
+        notesSection.className = 'section-notes';
+        container.appendChild(notesSection);
+    }
+
+    notesSection.innerHTML = `
+        <div class="notes-header">
+            <div class="section-title"><i class="ph ph-note"></i> Bitácora de Notas</div>
+            <button type="button" class="btn-add-note-pill" id="btnOpenNewNotaModal">+ NOTA</button>
+        </div>
+        <div class="notes-tags-container" id="notesTagsContainer">
+            <div style="color:var(--text-secondary); font-size:0.85rem;"><i class="ph ph-spinner ph-spin"></i> Cargando notas...</div>
+        </div>
+    `;
+
+    const btnAdd = notesSection.querySelector('#btnOpenNewNotaModal');
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            abrirModalNuevaNota(categoria, id);
+        });
+    }
+
+    await fetchAndRenderNotesTags(categoria, id);
+}
+
+async function fetchAndRenderNotesTags(categoria, id) {
+    const container = document.getElementById('notesTagsContainer');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`api/notas.php?action=get&cat=${encodeURIComponent(categoria)}&id_activo=${id}`);
+        const notas = await res.json();
+
+        if (!notas || notas.length === 0) {
+            container.innerHTML = '<span class="note-empty-text">No hay notas registradas para este activo.</span>';
+            return;
+        }
+
+        window.currentLoadedNotas = notas;
+        container.innerHTML = '';
+
+        notas.forEach((n, idx) => {
+            let fechaStr = '';
+            if (n.fecha) {
+                const parts = n.fecha.substring(0, 10).split('-');
+                if (parts.length === 3) {
+                    fechaStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                } else {
+                    fechaStr = n.fecha.substring(0, 10);
+                }
+            }
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'note-tag-btn';
+            btn.textContent = `${n.titulo} (${fechaStr})`;
+            btn.addEventListener('click', () => {
+                abrirModalDetalleNota(n, categoria, id);
+            });
+            container.appendChild(btn);
+        });
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<span style="color:red; font-size:0.85rem;">Error al cargar notas.</span>';
+    }
+}
+
+function abrirModalNuevaNota(categoria, idActivo) {
+    const modal = document.getElementById('notaModal');
+    const titleEl = document.getElementById('notaModalTitle');
+    const modeEl = document.getElementById('notaModalMode');
+    const idNotaEl = document.getElementById('notaModalIdNota');
+    const catEl = document.getElementById('notaModalCat');
+    const idActivoEl = document.getElementById('notaModalIdActivo');
+
+    const viewTit = document.getElementById('notaModalViewTitulo');
+    const viewFec = document.getElementById('notaModalViewFecha');
+    const viewCont = document.getElementById('notaModalViewContenido');
+    const viewAuthBox = document.getElementById('notaModalViewAuthorBox');
+
+    const inpTit = document.getElementById('notaModalInputTitulo');
+    const inpFec = document.getElementById('notaModalInputFecha');
+    const inpCont = document.getElementById('notaModalInputContenido');
+
+    const btnEdit = document.getElementById('btnEditNotaModal');
+    const btnDel = document.getElementById('btnDeleteNotaModal');
+    const btnSave = document.getElementById('btnSaveNotaModal');
+    const btnCancel = document.getElementById('btnCancelNotaModal');
+
+    modeEl.value = 'add';
+    idNotaEl.value = '';
+    catEl.value = categoria;
+    idActivoEl.value = idActivo;
+
+    titleEl.innerHTML = '<i class="ph ph-note-pencil" style="color: var(--accent-green);"></i> Nueva Nota';
+
+    // Ocultar vistas de texto
+    viewTit.style.display = 'none';
+    viewFec.style.display = 'none';
+    viewCont.style.display = 'none';
+    viewAuthBox.style.display = 'none';
+
+    // Mostrar inputs
+    inpTit.style.display = 'block';
+    inpFec.style.display = 'block';
+    inpCont.style.display = 'block';
+
+    inpTit.value = '';
+    inpFec.value = new Date().toISOString().split('T')[0]; // Fecha de hoy por defecto
+    inpCont.value = '';
+
+    btnEdit.style.display = 'none';
+    btnDel.style.display = 'none';
+    btnSave.style.display = 'flex';
+    btnSave.textContent = 'Guardar';
+    btnCancel.textContent = 'Cancelar';
+
+    modal.style.display = 'flex';
+    inpFec.focus();
+}
+
+function abrirModalDetalleNota(nota, categoria, idActivo) {
+    const modal = document.getElementById('notaModal');
+    const titleEl = document.getElementById('notaModalTitle');
+    const modeEl = document.getElementById('notaModalMode');
+    const idNotaEl = document.getElementById('notaModalIdNota');
+    const catEl = document.getElementById('notaModalCat');
+    const idActivoEl = document.getElementById('notaModalIdActivo');
+
+    const viewTit = document.getElementById('notaModalViewTitulo');
+    const viewFec = document.getElementById('notaModalViewFecha');
+    const viewCont = document.getElementById('notaModalViewContenido');
+    const viewAuthBox = document.getElementById('notaModalViewAuthorBox');
+    const viewAuth = document.getElementById('notaModalViewAuthor');
+
+    const inpTit = document.getElementById('notaModalInputTitulo');
+    const inpFec = document.getElementById('notaModalInputFecha');
+    const inpCont = document.getElementById('notaModalInputContenido');
+
+    const btnEdit = document.getElementById('btnEditNotaModal');
+    const btnDel = document.getElementById('btnDeleteNotaModal');
+    const btnSave = document.getElementById('btnSaveNotaModal');
+    const btnCancel = document.getElementById('btnCancelNotaModal');
+
+    modeEl.value = 'view';
+    idNotaEl.value = nota.id_nota;
+    catEl.value = categoria;
+    idActivoEl.value = idActivo;
+
+    titleEl.innerHTML = '<i class="ph ph-note" style="color: var(--accent-green);"></i> Detalle de Nota';
+
+    // Llenar datos en texto
+    viewTit.textContent = nota.titulo;
+    viewFec.textContent = nota.fecha ? nota.fecha.substring(0, 16) : '';
+    viewCont.textContent = nota.nota;
+    viewAuth.textContent = `${nota.personal || 'Personal'} (Matrícula: ${nota.matricula || 'N/A'})`;
+
+    // Llenar datos en inputs (por si entra a modo edición)
+    inpTit.value = nota.titulo;
+    inpFec.value = nota.fecha ? nota.fecha.substring(0, 10) : '';
+    inpCont.value = nota.nota;
+
+    // Mostrar vistas de solo lectura
+    viewTit.style.display = 'block';
+    viewFec.style.display = 'block';
+    viewCont.style.display = 'block';
+    viewAuthBox.style.display = 'block';
+
+    // Ocultar inputs
+    inpTit.style.display = 'none';
+    inpFec.style.display = 'none';
+    inpCont.style.display = 'none';
+
+    // Botones
+    btnEdit.style.display = 'flex';
+    btnDel.style.display = 'flex';
+    btnSave.style.display = 'none';
+    btnCancel.textContent = 'Cerrar';
+
+    modal.style.display = 'flex';
+}
+
+function activarEdicionNota() {
+    const titleEl = document.getElementById('notaModalTitle');
+    const modeEl = document.getElementById('notaModalMode');
+
+    const viewTit = document.getElementById('notaModalViewTitulo');
+    const viewFec = document.getElementById('notaModalViewFecha');
+    const viewCont = document.getElementById('notaModalViewContenido');
+
+    const inpTit = document.getElementById('notaModalInputTitulo');
+    const inpFec = document.getElementById('notaModalInputFecha');
+    const inpCont = document.getElementById('notaModalInputContenido');
+
+    const btnEdit = document.getElementById('btnEditNotaModal');
+    const btnSave = document.getElementById('btnSaveNotaModal');
+    const btnCancel = document.getElementById('btnCancelNotaModal');
+
+    modeEl.value = 'edit';
+    titleEl.innerHTML = '<i class="ph ph-pencil-simple" style="color: var(--accent-green);"></i> Editar Nota';
+
+    // Ocultar vistas
+    viewTit.style.display = 'none';
+    viewFec.style.display = 'none';
+    viewCont.style.display = 'none';
+
+    // Mostrar inputs
+    inpTit.style.display = 'block';
+    inpFec.style.display = 'block';
+    inpCont.style.display = 'block';
+
+    btnEdit.style.display = 'none';
+    btnSave.style.display = 'flex';
+    btnSave.textContent = 'Guardar Cambios';
+    btnCancel.textContent = 'Cancelar';
+
+    inpTit.focus();
+}
+
+function cerrarNotaModal() {
+    const modal = document.getElementById('notaModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 function closeModal() {
@@ -566,6 +980,7 @@ function openAddModal(categoria) {
 
     document.getElementById('modalItemId').value = '';
     document.getElementById('modalItemCat').value = categoria;
+    if (form) form.classList.add('edit-mode');
 
     let fields = [];
     switch(categoria) {
@@ -601,7 +1016,7 @@ function openImportModal(categoria) {
     // Link directly to the server-side API for the most reliable download
     const linkDescargar = document.getElementById('linkDescargarPlantilla');
     linkDescargar.href = `api/template.php?cat=${categoria}`;
-    linkDescargar.onclick = null; // Remove the JS click handler
+    linkDescargar.onclick = null;
 }
 
 function downloadTemplate(categoria) {
@@ -616,7 +1031,7 @@ function downloadTemplate(categoria) {
     }
     const ws = XLSX.utils.aoa_to_sheet([headers]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Plantilla");
+    XLSX.utils.book_append_sheet(wb, "Plantilla");
     XLSX.writeFile(wb, `plantilla_${categoria}.xlsx`);
 }
 
@@ -658,7 +1073,6 @@ function filterEmployeesByUnit(unitName) {
     const rows = document.querySelectorAll('#bodyEmpleados tr');
     const searchInput = document.getElementById('searchEmpleados');
     
-    // Clear search input to avoid conflict
     if (searchInput) searchInput.value = '';
 
     rows.forEach(row => {
@@ -670,7 +1084,6 @@ function filterEmployeesByUnit(unitName) {
         }
     });
     
-    // Highlight selected unit row
     const unitRows = document.querySelectorAll('#bodyUnidades tr');
     unitRows.forEach(r => {
         r.style.backgroundColor = '';
@@ -693,7 +1106,6 @@ function filterByStat(category, term) {
     if (localSearch) {
         if (term === 'Sin Especificar') {
             let fieldKey = category;
-            // Mapeo de nombres de bloques a claves de búsqueda
             if (category === 'fabricante_modelo') fieldKey = 'fabricante';
             if (category === 'area') fieldKey = 'area';
             if (category === 'estatus') fieldKey = 'estatus';
@@ -708,4 +1120,3 @@ function filterByStat(category, term) {
         localSearch.dispatchEvent(new Event('input'));
     }
 }
-

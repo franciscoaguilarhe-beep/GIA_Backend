@@ -5,12 +5,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header("Content-Type: application/json; charset=UTF-8");
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No autorizado']);
-    exit;
-}
-
 include_once '../config/database.php';
 
 $database = new Database();
@@ -69,6 +63,6 @@ if($action == 'save_unidad') {
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
 } else {
-    echo json_encode(['success' => false, 'error' => 'AcciÃ³n invÃ¡lida']);
+    echo json_encode(['success' => false, 'error' => 'Acción inválida']);
 }
 ?>

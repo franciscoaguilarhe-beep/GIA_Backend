@@ -5,12 +5,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header("Content-Type: application/json; charset=UTF-8");
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
-    exit;
-}
-
 include_once '../config/database.php';
 require_once '../vendor/autoload.php';
 
@@ -22,7 +16,7 @@ $db = $database->getConnection();
 $cat = isset($_POST['entity_cat']) ? $_POST['entity_cat'] : null;
 
 if (!$cat || !isset($_FILES['fileExcel']) || $_FILES['fileExcel']['error'] !== UPLOAD_ERR_OK) {
-    echo json_encode(['error' => 'Datos de importaciÃ³n o archivo invÃ¡lidos']);
+    echo json_encode(['error' => 'Datos de importación o archivo inválidos']);
     exit;
 }
 
@@ -37,7 +31,7 @@ switch($cat) {
     case 'unidades': $table = 'unidades'; break;
     case 'empleados': $table = 'empleados'; break;
     default: 
-        echo json_encode(['error' => 'CategorÃ­a invÃ¡lida']);
+        echo json_encode(['error' => 'Categoría inválida']);
         exit;
 }
 
@@ -49,12 +43,12 @@ try {
     $rows = $sheet->toArray();
     
     if (count($rows) <= 1) {
-        echo json_encode(['error' => 'El archivo estÃ¡ vacÃ­o o solo contiene encabezados.']);
+        echo json_encode(['error' => 'El archivo está vacío o solo contiene encabezados.']);
         exit;
     }
 
     $headers = array_shift($rows);
-    $uploadedHeaders = array_map(function($h) { return trim((string)$h); }, $headers);
+    $uploadedHeaders = array_map(function($h) { return strtolower(trim((string)$h)); }, $headers);
 
     $success_count = 0;
     $error_count = 0;
@@ -84,6 +78,7 @@ try {
         $serie = isset($data['serie']) ? trim((string)$data['serie']) : null;
         $clave = isset($data['clave']) ? trim((string)$data['clave']) : null;
         $matricula = isset($data['matricula']) ? trim((string)$data['matricula']) : null;
+        $extension = isset($data['extension']) ? trim((string)$data['extension']) : null;
         $exists = false;
         
         if ($serie && $table !== 'unidades' && $table !== 'empleados') {
@@ -92,13 +87,23 @@ try {
             $check_stmt->bindParam(':serie', $serie);
             $check_stmt->execute();
             $exists = $check_stmt->fetch();
-        } elseif ($clave && $table === 'unidades') {
+        } 
+        
+        if (!$exists && $extension && $table === 'telefonos') {
+            $check_q = "SELECT id FROM $table WHERE extension = :extension";
+            $check_stmt = $db->prepare($check_q);
+            $check_stmt->bindParam(':extension', $extension);
+            $check_stmt->execute();
+            $exists = $check_stmt->fetch();
+        }
+        
+        if (!$exists && $clave && $table === 'unidades') {
             $check_q = "SELECT id FROM $table WHERE clave = :clave";
             $check_stmt = $db->prepare($check_q);
             $check_stmt->bindParam(':clave', $clave);
             $check_stmt->execute();
             $exists = $check_stmt->fetch();
-        } elseif ($matricula && $table === 'empleados') {
+        } elseif (!$exists && $matricula && $table === 'empleados') {
             $check_q = "SELECT id FROM $table WHERE matricula = :matricula";
             $check_stmt = $db->prepare($check_q);
             $check_stmt->bindParam(':matricula', $matricula);
@@ -180,7 +185,7 @@ try {
 
         // Audit fields
         if ($table !== 'unidades' && $table !== 'empleados') {
-            $final_data['modificado_por'] = $_SESSION['user_id'];
+            $final_data['modificado_por'] = $_SESSION['user_id'] ?? 1;
         }
 
         $fields = [];
@@ -214,7 +219,7 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => "ImportaciÃ³n completada. Ã‰xitos: $success_count, Errores: $error_count"
+        'message' => "Importación completada. Éxitos: $success_count, Errores: $error_count"
     ]);
 
 } catch (Exception $e) {

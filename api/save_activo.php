@@ -5,12 +5,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header("Content-Type: application/json; charset=UTF-8");
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
-    exit;
-}
-
 include_once '../config/database.php';
 
 $database = new Database();
@@ -20,6 +14,45 @@ $db = $database->getConnection();
 $data = $_POST;
 $id = isset($data['id']) ? intval($data['id']) : 0;
 $cat = isset($data['entity_cat']) ? $data['entity_cat'] : '';
+
+// 1. Validar matrícula del responsable que autoriza la acción
+$matricula_responsable = trim($data['matricula_responsable'] ?? ($data['matricula_autoriza'] ?? ''));
+if (empty($matricula_responsable)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Se requiere la matrícula del personal para autorizar esta acción.']);
+    exit;
+}
+
+$emp_stmt = $db->prepare("SELECT id, matricula, nombre FROM empleados WHERE matricula = :m LIMIT 1");
+$emp_stmt->execute([':m' => $matricula_responsable]);
+$responsable = $emp_stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$responsable) {
+    http_response_code(400);
+    echo json_encode(['error' => "La matrícula '$matricula_responsable' no se encuentra registrada en el sistema."]);
+    exit;
+}
+
+$nombre_responsable = $responsable['nombre'];
+
+// Mapeo de campos para compatibilidad con la App Móvil
+if (isset($data['usuario_asignado']) && (!isset($data['nombre']) || $data['nombre'] == 'N/A' || empty($data['nombre']))) {
+    $data['nombre'] = $data['usuario_asignado'];
+}
+
+// Traducción de nombres de campos Móvil -> Base de Datos
+if (isset($data['tipo_almacenamiento'])) {
+    $data['tipo_alm'] = $data['tipo_almacenamiento'];
+    unset($data['tipo_almacenamiento']);
+}
+if (isset($data['puerto_router'])) {
+    $data['p_router'] = $data['puerto_router'];
+    unset($data['puerto_router']);
+}
+if (isset($data['mac_net']) && $cat == 'redes') {
+    $data['mac'] = $data['mac_net'];
+    unset($data['mac_net']);
+}
 
 if (empty($cat)) {
     http_response_code(400);
@@ -41,16 +74,6 @@ switch($cat) {
         http_response_code(400);
         echo json_encode(['error' => 'Categoría inválida']);
         exit;
-}
-
-// Prepare fields and values
-$fields = [];
-$placeholders = [];
-$params = [];
-
-// Audit fields
-if ($table !== 'unidades' && $table !== 'empleados') {
-    $data['modificado_por'] = $_SESSION['user_id'];
 }
 
 // Map foreign keys and dates
@@ -86,7 +109,6 @@ if (isset($data['matricula']) && $table === 'equipos_computo') {
         
         if ($e_res) {
             $data['id_usuario'] = $e_res['id'];
-            // Actualizar información del empleado si ya existe
             $upd_e = $db->prepare("UPDATE empleados SET nombre = :n, usuario = :u, categoria = :c WHERE id = :id");
             $upd_e->execute([
                 ':n' => (isset($data['nombre']) && $data['nombre'] !== 'N/A') ? trim($data['nombre']) : 'N/A',
@@ -95,7 +117,6 @@ if (isset($data['matricula']) && $table === 'equipos_computo') {
                 ':id' => $e_res['id']
             ]);
             
-            // Sincronizar cuenta_dominio si el empleado tiene usuario
             if (!empty($data['cuenta'])) {
                 $data['cuenta_dominio'] = $data['cuenta'];
             }
@@ -110,7 +131,6 @@ if (isset($data['matricula']) && $table === 'equipos_computo') {
             ]);
             $data['id_usuario'] = $db->lastInsertId();
             
-            // Sincronizar cuenta_dominio si el empleado tiene usuario
             if (!empty($data['cuenta'])) {
                 $data['cuenta_dominio'] = $data['cuenta'];
             }
@@ -142,22 +162,76 @@ if (isset($data['categoria_usuario'])) {
     unset($data['categoria_usuario']);
 }
 
-// Remove non-table fields
+// Remove non-table fields and internal mobile fields
 unset($data['entity_cat']);
 unset($data['id']);
+unset($data['remote_id']);
+unset($data['is_dirty']);
+unset($data['json_data']);
+unset($data['usuario_asignado']);
+unset($data['matricula_responsable']);
+unset($data['matricula_autoriza']);
+
 if ($table !== 'empleados') {
+    unset($data['matricula']);
+    unset($data['cuenta']);
     unset($data['categoria']);
 }
+if ($table !== 'telefonos' && $table !== 'empleados') {
+    unset($data['nombre']);
+}
+
+// Asignar modificado_por SOLO en tablas que no sean unidades ni empleados
+if ($table !== 'unidades' && $table !== 'empleados') {
+    $data['modificado_por'] = $matricula_responsable;
+}
+
+// Obtener columnas reales de la tabla para filtrar campos inválidos
+$valid_columns = [];
+try {
+    $q_cols = $db->query("DESCRIBE $table");
+    while ($col = $q_cols->fetch()) {
+        $valid_columns[] = $col['Field'];
+    }
+} catch (Exception $e) {
+}
+
+$fields = [];
+$placeholders = [];
+$params = [];
 
 foreach ($data as $key => $value) {
-    if ($value === '') $value = null;
-    $fields[] = "`$key`";
-    $placeholders[] = ":$key";
-    $params[":$key"] = $value;
+    if ($value === '' || $value === 'N/A') $value = null;
+    
+    if (in_array($key, $valid_columns)) {
+        $fields[] = "`$key`";
+        $placeholders[] = ":$key";
+        $params[":$key"] = $value;
+    }
 }
 
 try {
     if ($id > 0) {
+        // Obtener estado anterior para registrar los cambios en historial
+        $old_stmt = $db->prepare("SELECT * FROM $table WHERE id = :id LIMIT 1");
+        $old_stmt->execute([':id' => $id]);
+        $old_row = $old_stmt->fetch(PDO::FETCH_ASSOC);
+
+        $changes = [];
+        foreach ($data as $k => $v) {
+            if (in_array($k, $valid_columns) && $k !== 'modificado_por') {
+                $old_val = $old_row[$k] ?? null;
+                $new_val = $v;
+                if ((string)$old_val !== (string)$new_val) {
+                    $old_display = ($old_val === null || $old_val === '') ? 'vacío' : $old_val;
+                    $new_display = ($new_val === null || $new_val === '') ? 'vacío' : $new_val;
+                    $changes[] = "$k: '$old_display' → '$new_display'";
+                }
+            }
+        }
+
+        $detalles = count($changes) > 0 ? implode(" | ", $changes) : "Modificación de datos generales";
+
         $update_parts = [];
         foreach ($fields as $index => $field) {
             $placeholder = $placeholders[$index];
@@ -165,15 +239,48 @@ try {
         }
         $query = "UPDATE $table SET " . implode(", ", $update_parts) . " WHERE id = :target_id";
         $params[':target_id'] = $id;
+
+        $stmt = $db->prepare($query);
+        $stmt->execute($params);
+
+        // Identificador para el historial
+        $identificador = $old_row['serie'] ?? ($old_row['clave'] ?? ($old_row['matricula'] ?? ($old_row['unidad'] ?? "ID $id")));
+
+        // Registrar en historial
+        $hist_q = "INSERT INTO historial (categoria, id_activo, identificador, accion, detalles, matricula_responsable, nombre_responsable) 
+                   VALUES (:cat, :id_a, :ident, 'MODIFICACION', :det, :mat, :nom)";
+        $hist_stmt = $db->prepare($hist_q);
+        $hist_stmt->execute([
+            ':cat' => $cat,
+            ':id_a' => $id,
+            ':ident' => $identificador,
+            ':det' => $detalles,
+            ':mat' => $matricula_responsable,
+            ':nom' => $nombre_responsable
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Registro actualizado correctamente']);
     } else {
         $query = "INSERT INTO $table (" . implode(", ", $fields) . ") VALUES (" . implode(", ", $placeholders) . ")";
-    }
+        $stmt = $db->prepare($query);
+        $stmt->execute($params);
+        $new_id = $db->lastInsertId();
 
-    $stmt = $db->prepare($query);
-    if ($stmt->execute($params)) {
-        echo json_encode(['success' => true, 'message' => 'Registro guardado correctamente']);
-    } else {
-        echo json_encode(['error' => 'No se pudo guardar el registro']);
+        $identificador = $data['serie'] ?? ($data['clave'] ?? ($data['matricula'] ?? ($data['unidad'] ?? "ID $new_id")));
+
+        // Registrar en historial
+        $hist_q = "INSERT INTO historial (categoria, id_activo, identificador, accion, detalles, matricula_responsable, nombre_responsable) 
+                   VALUES (:cat, :id_a, :ident, 'ALTA', 'Alta de nuevo registro en el inventario', :mat, :nom)";
+        $hist_stmt = $db->prepare($hist_q);
+        $hist_stmt->execute([
+            ':cat' => $cat,
+            ':id_a' => $new_id,
+            ':ident' => $identificador,
+            ':mat' => $matricula_responsable,
+            ':nom' => $nombre_responsable
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Registro agregado correctamente']);
     }
 } catch (PDOException $e) {
     http_response_code(500);

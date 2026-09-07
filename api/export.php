@@ -3,10 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    die("No autorizado");
-}
-
 include_once '../config/database.php';
 require_once '../vendor/autoload.php';
 
@@ -17,7 +13,7 @@ $database = new Database();
 $db = $database->getConnection();
 
 $cat = isset($_GET['cat']) ? $_GET['cat'] : 'computo';
-$id_unidad_filtro = isset($_SESSION['id_unidad']) ? $_SESSION['id_unidad'] : null;
+$id_unidad_filtro = isset($_GET['id_unidad']) ? intval($_GET['id_unidad']) : (isset($_SESSION['id_unidad']) ? $_SESSION['id_unidad'] : null);
 
 $headers = [];
 $query = "";

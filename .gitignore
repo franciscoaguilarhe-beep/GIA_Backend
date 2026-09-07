@@ -12,3 +12,4 @@ vendor/
 # Temporary files
 *.tmp
 *.bak
+scratch/

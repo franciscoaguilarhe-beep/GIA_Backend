@@ -1,12 +1,14 @@
 <?php
-class Database {
-    private $host = "127.0.0.1";
+class Database
+{
+    private $host = "localhost";
     private $db_name = "gia_db";
     private $username = "root";
     private $password = "";
     public $conn;
 
-    public function getConnection() {
+    public function getConnection()
+    {
         $this->conn = null;
 
         try {
@@ -17,7 +19,7 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             // Configurar el fetch mode por defecto a asociativo
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch(PDOException $exception) {
+        } catch (PDOException $exception) {
             echo "Error de conexiÃ³n: " . $exception->getMessage();
         }
 

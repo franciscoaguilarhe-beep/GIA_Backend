@@ -9,28 +9,32 @@ $db = $database->getConnection();
 
 // Subqueries for all categories with CORRECT field names
 $query_equipos = "
-    SELECT 'computo' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, t.id_usuario, t.area, t.departamento, t.estatus,
+    SELECT 'computo' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, t.id_usuario, 
+           COALESCE(t.area, '') as area, COALESCE(t.departamento, '') as departamento, t.estatus,
            t.nombre_equipo, t.monitor, t.tipo_alm as tipo_almacenamiento, t.capacidad, t.ram, t.mac_net, t.mac_wifi, t.nodo, t.p_router as puerto_router, t.extension, t.proyecto, t.fecha_instalacion, t.fecha_retiro, t.observaciones,
            NULL as uso, NULL as num_puertos
     FROM equipos_computo t
 ";
 
 $query_impresoras = "
-    SELECT 'impresoras' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, NULL as id_usuario, t.area, t.departamento, t.estatus,
+    SELECT 'impresoras' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, NULL as id_usuario, 
+           COALESCE(t.area, '') as area, COALESCE(t.departamento, '') as departamento, t.estatus,
            NULL as nombre_equipo, NULL as monitor, NULL as tipo_almacenamiento, NULL as capacidad, NULL as ram, NULL as mac_net, NULL as mac_wifi, NULL as nodo, NULL as puerto_router, NULL as extension, NULL as proyecto, t.fecha_instalacion, t.fecha_retiro, t.observaciones,
            NULL as uso, NULL as num_puertos
     FROM impresoras t
 ";
 
 $query_televisiones = "
-    SELECT 'televisiones' as categoria, t.id, t.serie, NULL as tipo, t.fabricante, t.modelo, NULL as ip, t.id_unidad, NULL as id_usuario, t.area, t.departamento, t.estatus,
+    SELECT 'televisiones' as categoria, t.id, t.serie, NULL as tipo, t.fabricante, t.modelo, NULL as ip, t.id_unidad, NULL as id_usuario, 
+           COALESCE(t.area, '') as area, COALESCE(t.departamento, '') as departamento, t.estatus,
            NULL as nombre_equipo, NULL as monitor, NULL as tipo_almacenamiento, NULL as capacidad, NULL as ram, NULL as mac_net, NULL as mac_wifi, NULL as nodo, NULL as puerto_router, NULL as extension, NULL as proyecto, t.fecha_instalacion, t.fecha_retiro, t.observaciones,
            t.uso, NULL as num_puertos
     FROM televisiones t
 ";
 
 $query_telefonos = "
-    SELECT 'telefonia' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, NULL as id_usuario, t.area, t.departamento, t.estatus,
+    SELECT 'telefonia' as categoria, t.id, t.serie, t.tipo, t.fabricante, t.modelo, t.ip, t.id_unidad, NULL as id_usuario, 
+           COALESCE(t.area, '') as area, COALESCE(t.departamento, '') as departamento, t.estatus,
            t.nombre as nombre_equipo, NULL as monitor, NULL as tipo_almacenamiento, NULL as capacidad, NULL as ram, NULL as mac_net, NULL as mac_wifi, t.nodo, t.p_router as puerto_router, t.extension, NULL as proyecto, t.fecha_instalacion, t.fecha_retiro, t.observaciones,
            NULL as uso, NULL as num_puertos
     FROM telefonos t

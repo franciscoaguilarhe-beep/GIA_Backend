@@ -1010,3 +1010,124 @@ tr:hover {
 .table-empleados th:nth-child(4) {
     width: auto;
 }
+
+/* ==========================================================
+   SECCIÓN DE NOTAS / BITÁCORA EN FICHA TÉCNICA
+   ========================================================== */
+.section-notes {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.notes-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.notes-header .section-title {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.btn-add-note-pill {
+    background-color: #000000;
+    color: #4CAF50;
+    border: 1px solid #1f1f1f;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.btn-add-note-pill:hover {
+    background-color: #0d0d0d;
+    color: #4CAF50;
+    border-color: #4CAF50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+    transform: translateY(-1px);
+}
+
+.notes-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.note-tag-btn {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F5F6F8 100%);
+    border: 1px solid #D1D5DB;
+    color: #111111;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.note-tag-btn:hover {
+    background: linear-gradient(180deg, #FFFFFF 0%, #ECEFF1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px -2px rgba(0, 0, 0, 0.5), 0 3px 6px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+.note-tag-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.note-empty-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Modal de Autorización por Matrícula */
+.auth-modal-content {
+    max-width: 380px;
+    text-align: center;
+}
+
+.auth-modal-content h3 {
+    margin-bottom: 8px;
+}
+
+.auth-modal-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.auth-modal-content input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    text-align: center;
+    letter-spacing: 2px;
+    background-color: var(--bg-base);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.auth-modal-content input:focus {
+    border-color: var(--accent-green);
+}
