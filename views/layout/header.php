@@ -48,6 +48,9 @@ $is_logged_in = isset($_SESSION['user_id']);
             <a href="inventario.php?cat=consumibles" title="Consumibles y Cables" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'consumibles' ? 'active' : '' ?>">
                 <i class="ph ph-battery-full"></i>
             </a>
+            <a href="historial_general.php" title="Historial y Auditoría" class="<?= basename($_SERVER['PHP_SELF']) == 'historial_general.php' ? 'active' : '' ?>">
+                <i class="ph ph-clock-counter-clockwise"></i>
+            </a>
             <a href="gestion_administrativa.php" title="Gestión Administrativa" class="<?= basename($_SERVER['PHP_SELF']) == 'gestion_administrativa.php' ? 'active' : '' ?>">
                 <i class="ph ph-gear"></i>
             </a>

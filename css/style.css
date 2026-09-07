@@ -378,8 +378,7 @@ body {
 
 table {
     width: 100%;
-    min-width: 1600px;
-    /* Increased to ensure horizontal scroll on most monitors */
+    min-width: 1200px;
     border-collapse: separate;
     border-spacing: 0;
     text-align: left;
@@ -388,19 +387,41 @@ table {
 table th,
 table td {
     white-space: nowrap;
-    /* Prevent wrapping in cells to keep table wide */
 }
 
 th,
 td {
-    font-size: 1rem;
-    padding: 12px 1px;
+    font-size: 0.95rem;
+    padding: 12px 12px;
     border-bottom: 1px solid var(--border-color);
+}
+
+th.col-usuario,
+td.col-usuario {
+    max-width: 200px;
+    min-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+th.col-cuenta,
+td.col-cuenta {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+th.col-area-depto,
+td.col-area-depto {
+    min-width: 280px;
+    white-space: nowrap;
 }
 
 th {
     text-transform: uppercase;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #4CAF50;
     font-weight: 500;
     background-color: rgba(30, 30, 30, 0.5);
@@ -1130,4 +1151,151 @@ tr:hover {
 
 .auth-modal-content input:focus {
     border-color: var(--accent-green);
+}
+
+/* ==========================================================
+   BADGES Y HISTORIAL DE MOVIMIENTOS
+   ========================================================== */
+.hist-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.badge-alta {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.badge-modificacion {
+    background-color: rgba(33, 150, 243, 0.15);
+    color: #64B5F6;
+    border: 1px solid rgba(33, 150, 243, 0.4);
+}
+
+.badge-eliminacion {
+    background-color: rgba(244, 67, 54, 0.15);
+    color: #E57373;
+    border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.badge-nota {
+    background-color: rgba(255, 152, 0, 0.15);
+    color: #FFB74D;
+    border: 1px solid rgba(255, 152, 0, 0.4);
+}
+
+/* Timeline en Ficha Técnica */
+.section-historial {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.historial-timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.timeline-card {
+    background: #161616;
+    border: 1px solid #282828;
+    border-radius: 6px;
+    padding: 10px 14px;
+    border-left: 4px solid #4CAF50;
+    transition: background-color 0.2s ease;
+}
+
+.timeline-card:hover {
+    background: #1b1b1b;
+}
+
+.timeline-card.card-modificacion {
+    border-left-color: #2196F3;
+}
+
+.timeline-card.card-eliminacion {
+    border-left-color: #F44336;
+}
+
+.timeline-card.card-nota {
+    border-left-color: #FF9800;
+}
+
+.timeline-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.timeline-author {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.timeline-date {
+    font-size: 0.78rem;
+    color: #888;
+}
+
+.timeline-details {
+    font-size: 0.85rem;
+    color: #d5d5d5;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.timeline-change-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #eceff1;
+}
+
+.historial-empty-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Tabla Global de Historial */
+.table-historial th,
+.table-historial td {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+}
+
+.col-detalles {
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.col-responsable {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

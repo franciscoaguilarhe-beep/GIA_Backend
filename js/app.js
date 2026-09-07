@@ -442,6 +442,7 @@ function openFichaTecnica(id, categoria) {
             // Cargar y mostrar bitácora de notas como botones / etiquetas
             if (id > 0) {
                 loadAndRenderNotas(categoria, id, modalBody);
+                loadAndRenderHistorial(categoria, id, modalBody);
             }
         })
         .catch(err => {
@@ -963,6 +964,91 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ---- Historial de Movimientos y Auditoría en Ficha Técnica ----
+
+async function loadAndRenderHistorial(categoria, id, container) {
+    let histSection = container.querySelector('.section-historial');
+    if (!histSection) {
+        histSection = document.createElement('div');
+        histSection.className = 'section-historial';
+        container.appendChild(histSection);
+    }
+
+    histSection.innerHTML = `
+        <div class="section-title"><i class="ph ph-clock-counter-clockwise"></i> Historial de Movimientos y Cambios</div>
+        <div class="historial-timeline-container" id="historialTimelineContainer">
+            <div style="color:var(--text-secondary); font-size:0.85rem;"><i class="ph ph-spinner ph-spin"></i> Cargando historial...</div>
+        </div>
+    `;
+
+    const timelineContainer = histSection.querySelector('#historialTimelineContainer');
+    if (!timelineContainer) return;
+
+    try {
+        const res = await fetch(`api/historial.php?action=get_by_activo&cat=${encodeURIComponent(categoria)}&id_activo=${id}`);
+        const historial = await res.json();
+
+        if (!historial || historial.length === 0) {
+            timelineContainer.innerHTML = '<span class="historial-empty-text">Sin movimientos o cambios registrados para este activo.</span>';
+            return;
+        }
+
+        timelineContainer.innerHTML = '';
+
+        historial.forEach((item) => {
+            const card = document.createElement('div');
+            let badgeClass = 'badge-modificacion';
+            let cardModClass = 'card-modificacion';
+            if (item.accion === 'ALTA') {
+                badgeClass = 'badge-alta';
+                cardModClass = 'card-alta';
+            } else if (item.accion === 'ELIMINACION') {
+                badgeClass = 'badge-eliminacion';
+                cardModClass = 'card-eliminacion';
+            } else if (item.accion === 'NOTA') {
+                badgeClass = 'badge-nota';
+                cardModClass = 'card-nota';
+            }
+
+            card.className = `timeline-card ${cardModClass}`;
+
+            let fechaStr = item.fecha || '';
+            if (item.fecha && item.fecha.length >= 16) {
+                const fParts = item.fecha.substring(0, 10).split('-');
+                const timePart = item.fecha.substring(11, 16);
+                if (fParts.length === 3) {
+                    fechaStr = `${fParts[2]}/${fParts[1]}/${fParts[0]} ${timePart}`;
+                }
+            }
+
+            let formattedDetails = '';
+            if (item.detalles && item.detalles.includes(' | ')) {
+                const detailParts = item.detalles.split(' | ');
+                formattedDetails = detailParts.map(p => `<span class="timeline-change-item">${escapeHtml(p)}</span>`).join(' ');
+            } else {
+                formattedDetails = escapeHtml(item.detalles || 'Sin detalles');
+            }
+
+            card.innerHTML = `
+                <div class="timeline-card-header">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="hist-badge ${badgeClass}">${escapeHtml(item.accion)}</span>
+                        <span class="timeline-author"><i class="ph ph-user"></i> ${escapeHtml(item.nombre_responsable || 'Personal')} (Matrícula: <strong>${escapeHtml(item.matricula_responsable || 'N/A')}</strong>)</span>
+                    </div>
+                    <span class="timeline-date"><i class="ph ph-calendar"></i> ${escapeHtml(fechaStr)}</span>
+                </div>
+                <div class="timeline-details">${formattedDetails}</div>
+            `;
+
+            timelineContainer.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error('Error cargando historial:', err);
+        timelineContainer.innerHTML = '<span class="historial-empty-text" style="color:var(--danger-color);">Error al cargar el historial.</span>';
+    }
+}
+
 function closeModal() {
     const modal = document.getElementById('fichaModal');
     if (modal) modal.style.display = 'none';
@@ -1105,13 +1191,17 @@ function filterByStat(category, term) {
     const localSearch = document.getElementById('localSearch');
     if (localSearch) {
         if (term === 'Sin Especificar') {
-            let fieldKey = category;
-            if (category === 'fabricante_modelo') fieldKey = 'fabricante';
-            if (category === 'area') fieldKey = 'area';
-            if (category === 'estatus') fieldKey = 'estatus';
-            if (category === 'proyecto') fieldKey = 'proyecto';
-            if (category === 'tipo') fieldKey = 'tipo';
-            if (category === 'uso') fieldKey = 'uso';
+            let fieldKey = (category || '').toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .trim();
+            if (fieldKey.includes('fabricante') || fieldKey.includes('modelo')) fieldKey = 'fabricante';
+            if (fieldKey.includes('area')) fieldKey = 'area';
+            if (fieldKey.includes('departamento')) fieldKey = 'departamento';
+            if (fieldKey.includes('estatus')) fieldKey = 'estatus';
+            if (fieldKey.includes('proyecto')) fieldKey = 'proyecto';
+            if (fieldKey.includes('tipo')) fieldKey = 'tipo';
+            if (fieldKey.includes('uso')) fieldKey = 'uso';
+            if (fieldKey.includes('categoria')) fieldKey = 'categoria';
             
             localSearch.value = 'sin_' + fieldKey;
         } else {

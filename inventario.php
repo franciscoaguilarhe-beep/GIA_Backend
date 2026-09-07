@@ -101,6 +101,7 @@ $stats_blocks = [];
 switch($cat) {
     case 'computo':
         $stats_blocks['Área'] = getStats($db, $table, "area", 0, $filtro_unidad);
+        $stats_blocks['Departamento'] = getStats($db, $table, "departamento", 0, $filtro_unidad);
         $stats_blocks['Estatus'] = getStats($db, $table, "estatus", 0, $filtro_unidad);
         $stats_blocks['Fabricante/Modelo'] = getStats($db, $table, "CONCAT(fabricante, ' ', modelo)", 0, $filtro_unidad);
         $stats_blocks['Proyecto'] = getStats($db, $table, "proyecto", 0, $filtro_unidad);
@@ -108,14 +109,19 @@ switch($cat) {
         break;
     case 'impresoras':
         $stats_blocks['Área'] = getStats($db, $table, "area", 0, $filtro_unidad);
+        $stats_blocks['Departamento'] = getStats($db, $table, "departamento", 0, $filtro_unidad);
         $stats_blocks['Fabricante/Modelo'] = getStats($db, $table, "CONCAT(fabricante, ' ', modelo)", 0, $filtro_unidad);
         $stats_blocks['Tipo'] = getStats($db, $table, "tipo", 0, $filtro_unidad);
         break;
     case 'televisiones':
+        $stats_blocks['Área'] = getStats($db, $table, "area", 0, $filtro_unidad);
+        $stats_blocks['Departamento'] = getStats($db, $table, "departamento", 0, $filtro_unidad);
         $stats_blocks['Fabricante/Modelo'] = getStats($db, $table, "CONCAT(fabricante, ' ', modelo)", 0, $filtro_unidad);
         $stats_blocks['Uso'] = getStats($db, $table, "uso", 0, $filtro_unidad);
         break;
     case 'telefonia':
+        $stats_blocks['Área'] = getStats($db, $table, "area", 0, $filtro_unidad);
+        $stats_blocks['Departamento'] = getStats($db, $table, "departamento", 0, $filtro_unidad);
         $stats_blocks['Fabricante/Modelo'] = getStats($db, $table, "CONCAT(fabricante, ' ', modelo)", 0, $filtro_unidad);
         $stats_blocks['Tipo'] = getStats($db, $table, "tipo", 0, $filtro_unidad);
         break;
@@ -217,7 +223,13 @@ $total_global = count($records);
                 <thead>
                     <tr>
                         <?php foreach($columns as $col): ?>
-                            <th><?= $col ?></th>
+                            <?php 
+                                $col_class = '';
+                                if ($col === 'USUARIO ASIGNADO') $col_class = 'col-usuario';
+                                elseif ($col === 'CUENTA') $col_class = 'col-cuenta';
+                                elseif ($col === 'AREA/DEPTO') $col_class = 'col-area-depto';
+                            ?>
+                            <th class="<?= $col_class ?>"><?= $col ?></th>
                         <?php endforeach; ?>
                     </tr>
                 </thead>
@@ -225,6 +237,18 @@ $total_global = count($records);
                     <?php if(count($records) > 0): ?>
                         <?php foreach($records as $row): ?>
                             <?php 
+                                $area_val = trim($row['area'] ?? '');
+                                $depto_val = trim($row['departamento'] ?? '');
+                                if ($area_val !== '' && $depto_val !== '' && strcasecmp($area_val, $depto_val) !== 0) {
+                                    $area_depto_text = $area_val . ' / ' . $depto_val;
+                                } elseif ($area_val !== '') {
+                                    $area_depto_text = $area_val;
+                                } elseif ($depto_val !== '') {
+                                    $area_depto_text = $depto_val;
+                                } else {
+                                    $area_depto_text = 'N/A';
+                                }
+
                                 $search_data = [
                                     'serie' => $row['serie'],
                                     'ip' => $row['ip'] ?? '',
@@ -235,6 +259,7 @@ $total_global = count($records);
                                     'departamento' => $row['departamento'] ?? '',
                                     'usuario' => $row['nombre_usuario'] ?? '',
                                     'matricula' => $row['matricula_usuario'] ?? '',
+                                    'cuenta' => $row['cuenta'] ?? '',
                                     'unidad' => $row['nombre_unidad'] ?? '',
                                     'proyecto' => $row['proyecto'] ?? '',
                                     'estatus' => $row['estatus'] ?? '',
@@ -256,40 +281,40 @@ $total_global = count($records);
                             ?>
                             <tr onclick="openFichaTecnica(<?= $row['id'] ?>, '<?= $cat ?>')" data-search="<?= htmlspecialchars($search_str) ?>">
                                 <?php if($cat == 'computo'): ?>
-                                    <td><?= $row['ip'] ?></td>
-                                    <td><?= $row['tipo'] ?></td>
-                                    <td><strong><?= $row['serie'] ?></strong></td>
-                                    <td><?= $row['nombre_usuario'] ?: 'N/A' ?></td>
-                                    <td><?= $row['cuenta'] ?: 'N/A' ?></td>
-                                    <td><?= $row['nombre_unidad'] ?></td>
-                                    <td><?= $row['area'] ?></td>
+                                    <td><?= htmlspecialchars($row['ip'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
+                                    <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
+                                    <td class="col-usuario" title="<?= htmlspecialchars($row['nombre_usuario'] ?: 'N/A') ?>"><?= htmlspecialchars($row['nombre_usuario'] ?: 'N/A') ?></td>
+                                    <td class="col-cuenta" title="<?= htmlspecialchars($row['cuenta'] ?: 'N/A') ?>"><?= htmlspecialchars($row['cuenta'] ?: 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td class="col-area-depto" title="<?= htmlspecialchars($area_depto_text) ?>"><?= htmlspecialchars($area_depto_text) ?></td>
                                 <?php elseif($cat == 'impresoras'): ?>
-                                    <td><strong><?= $row['serie'] ?></strong></td>
-                                    <td><?= $row['modelo'] ?></td>
-                                    <td><?= $row['nombre_unidad'] ?></td>
-                                    <td><?= $row['area'] ?></td>
-                                    <td><?= $row['tipo'] ?></td>
-                                    <td><?= $row['ip'] ?></td>
+                                    <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
+                                    <td><?= htmlspecialchars($row['modelo'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td class="col-area-depto" title="<?= htmlspecialchars($area_depto_text) ?>"><?= htmlspecialchars($area_depto_text) ?></td>
+                                    <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['ip'] ?? '') ?></td>
                                 <?php elseif($cat == 'televisiones'): ?>
-                                    <td><strong><?= $row['serie'] ?></strong></td>
-                                    <td><?= $row['fabricante'] ?></td>
-                                    <td><?= $row['modelo'] ?></td>
-                                    <td><?= $row['area'] ?></td>
+                                    <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
+                                    <td><?= htmlspecialchars($row['fabricante'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['modelo'] ?? '') ?></td>
+                                    <td class="col-area-depto" title="<?= htmlspecialchars($area_depto_text) ?>"><?= htmlspecialchars($area_depto_text) ?></td>
                                 <?php elseif($cat == 'telefonia'): ?>
-                                    <td><?= $row['nombre_unidad'] ?></td>
-                                    <td><?= $row['nombre'] ?></td>
-                                    <td><?= $row['extension'] ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['extension'] ?? '') ?></td>
                                 <?php elseif($cat == 'redes'): ?>
-                                    <td><strong><?= $row['serie'] ?></strong></td>
-                                    <td><?= $row['tipo'] ?></td>
-                                    <td><?= $row['nombre_unidad'] ?></td>
-                                    <td><?= $row['ip_gestion'] ?></td>
+                                    <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
+                                    <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['ip_gestion'] ?? '') ?></td>
                                 <?php elseif($cat == 'consumibles'): ?>
-                                    <td><?= $row['tipo'] ?></td>
-                                    <td><?= $row['categoria'] ?></td>
-                                    <td><?= $row['cantidad_stock'] ?></td>
-                                    <td><?= $row['nombre_unidad'] ?></td>
-                                    <td><?= $row['estatus'] ?></td>
+                                    <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['categoria'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['cantidad_stock'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['estatus'] ?? '') ?></td>
                                 <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
