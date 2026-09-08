@@ -57,6 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 authModal.style.display = 'none';
                 return;
             }
+            const bajaModal = document.getElementById('bajaModal');
+            if (bajaModal && bajaModal.style.display === 'flex') {
+                cerrarBajaModal();
+                return;
+            }
             const notaModal = document.getElementById('notaModal');
             if (notaModal && notaModal.style.display === 'flex') {
                 cerrarNotaModal();
@@ -269,43 +274,77 @@ document.addEventListener('DOMContentLoaded', () => {
     handleAdminSearch('searchUnidades', 'bodyUnidades');
     handleAdminSearch('searchEmpleados', 'bodyEmpleados');
 
-    // ---- Borrado de Registros ----
+    // ---- Borrado / Baja de Registros ----
+    const btnCloseBajaModal = document.getElementById('btnCloseBajaModal');
+    const btnCancelBajaModal = document.getElementById('btnCancelBajaModal');
+    const formBajaModal = document.getElementById('formBajaModal');
+
+    if (btnCloseBajaModal) btnCloseBajaModal.addEventListener('click', cerrarBajaModal);
+    if (btnCancelBajaModal) btnCancelBajaModal.addEventListener('click', cerrarBajaModal);
+
+    if (formBajaModal) {
+        formBajaModal.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('bajaItemId').value;
+            const cat = document.getElementById('bajaItemCat').value;
+            const fecha = document.getElementById('bajaInputFecha').value;
+            const estatus = document.getElementById('bajaInputEstatus').value;
+            const observaciones = document.getElementById('bajaInputObservaciones').value.trim();
+            const matricula = document.getElementById('bajaInputMatricula').value.trim();
+
+            if (!id || !cat) return;
+            if (!fecha) {
+                alert('Por favor seleccione la fecha de retiro o baja.');
+                return;
+            }
+            if (!observaciones) {
+                alert('Por favor especifique el motivo u observación del movimiento.');
+                return;
+            }
+            if (!matricula) {
+                alert('Por favor ingrese su matrícula de autorización.');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('entity_cat', cat);
+                formData.append('categoria', cat);
+                formData.append('fecha_retiro', fecha);
+                formData.append('estatus', estatus);
+                formData.append('observaciones', observaciones);
+                formData.append('matricula_responsable', matricula);
+
+                const response = await fetch('api/delete_item.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    cerrarBajaModal();
+                    if (typeof closeModal === 'function') closeModal();
+                    location.reload();
+                } else {
+                    alert(result.error || 'Error al procesar la baja.');
+                }
+            } catch (error) {
+                console.error('Error procesando baja:', error);
+                alert('Error de conexión con la API.');
+            }
+        });
+    }
+
     const btnDeleteModal = document.getElementById('btnDeleteModal');
     if (btnDeleteModal) {
-        btnDeleteModal.addEventListener('click', async () => {
+        btnDeleteModal.addEventListener('click', () => {
             const id = document.getElementById('modalItemId').value;
             const cat = document.getElementById('modalItemCat').value;
             
             if (!id || !cat) return;
-            
-            if (confirm(`¿Estás seguro de que deseas eliminar este registro de ${cat.toUpperCase()}? Esta acción no se puede deshacer.`)) {
-                // Solicitar matrícula antes de eliminar
-                const matricula = await solicitarMatricula('Ingrese su matrícula para confirmar la eliminación:');
-                if (!matricula) return;
-
-                try {
-                    const formData = new FormData();
-                    formData.append('id', id);
-                    formData.append('entity_cat', cat);
-                    formData.append('categoria', cat);
-                    formData.append('matricula_responsable', matricula);
-                    
-                    const response = await fetch('api/delete_item.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        alert(result.message);
-                        location.reload();
-                    } else {
-                        alert(result.error || 'Error al eliminar');
-                    }
-                } catch (error) {
-                    console.error('Error deleting:', error);
-                    alert('Error de conexión con la API.');
-                }
-            }
+            abrirModalBaja(cat, id);
         });
     }
 });
@@ -1002,7 +1041,7 @@ async function loadAndRenderHistorial(categoria, id, container) {
             if (item.accion === 'ALTA') {
                 badgeClass = 'badge-alta';
                 cardModClass = 'card-alta';
-            } else if (item.accion === 'ELIMINACION') {
+            } else if (item.accion === 'ELIMINACION' || item.accion === 'BAJA') {
                 badgeClass = 'badge-eliminacion';
                 cardModClass = 'card-eliminacion';
             } else if (item.accion === 'NOTA') {
@@ -1209,4 +1248,28 @@ function filterByStat(category, term) {
         }
         localSearch.dispatchEvent(new Event('input'));
     }
+}
+
+// ---- Funciones de Baja / Retiro de Equipo ----
+function abrirModalBaja(cat, id) {
+    const bajaModal = document.getElementById('bajaModal');
+    if (!bajaModal) return;
+
+    document.getElementById('bajaItemId').value = id;
+    document.getElementById('bajaItemCat').value = cat;
+    
+    // Set default date to today's date (YYYY-MM-DD)
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bajaInputFecha').value = today;
+    document.getElementById('bajaInputEstatus').value = 'RETIRADO';
+    document.getElementById('bajaInputObservaciones').value = '';
+    document.getElementById('bajaInputMatricula').value = '';
+
+    bajaModal.style.display = 'flex';
+    document.getElementById('bajaInputObservaciones').focus();
+}
+
+function cerrarBajaModal() {
+    const bajaModal = document.getElementById('bajaModal');
+    if (bajaModal) bajaModal.style.display = 'none';
 }
