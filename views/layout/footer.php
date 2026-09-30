@@ -117,6 +117,60 @@
         </div>
     </div>
 
+    <!-- Modal Popup para Registrar Baja / Retiro de Equipo -->
+    <div class="modal-overlay" id="bajaModal" style="z-index: 1080;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="ph ph-package" style="color: var(--danger-color, #ef4444);"></i> Registrar Baja / Retiro</h3>
+                <div class="modal-actions">
+                    <button type="button" class="close-btn" id="btnCloseBajaModal">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" style="display: block; padding-top: 15px;">
+                <form id="formBajaModal">
+                    <input type="hidden" id="bajaItemId" value="">
+                    <input type="hidden" id="bajaItemCat" value="">
+
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+                        El equipo no se eliminará físicamente de la base de datos; su estatus cambiará a <strong style="color: var(--danger-color, #ef4444);">BAJA / RETIRADO</strong>.
+                    </p>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>Fecha de Baja / Retiro</label>
+                        <input type="date" id="bajaInputFecha" required style="width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 12px; border-radius: 6px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>Nuevo Estatus</label>
+                        <select id="bajaInputEstatus" required style="width: 100%; padding: 8px 12px; border-radius: 6px; background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-primary);">
+                            <option value="RETIRADO" selected>RETIRADO</option>
+                            <option value="BAJA">BAJA</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Motivo / Observación del Movimiento</label>
+                        <textarea id="bajaInputObservaciones" rows="3" placeholder="Escriba la causa u observación por la cual se da de baja el activo..." required style="width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px; border-radius: 6px; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Matrícula de quien Autoriza</label>
+                        <input type="text" id="bajaInputMatricula" placeholder="Ingrese su matrícula..." required autocomplete="off" style="width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 12px; border-radius: 6px;">
+                    </div>
+
+                    <div class="modal-footer" style="padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" class="btn" id="btnCancelBajaModal">Cancelar</button>
+                        <button type="submit" class="btn-delete" id="btnConfirmBajaModal" style="display: flex; align-items: center; gap: 5px;">
+                            <i class="ph ph-check-circle"></i> Confirmar Baja
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Autorización por Matrícula -->
     <div class="modal-overlay" id="authModal" style="z-index: 1100;">
         <div class="modal-content auth-modal-content">

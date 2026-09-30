@@ -162,7 +162,7 @@ $total_global = count($records);
                                 
                                 $badge_class = 'badge-modificacion';
                                 if ($row['accion'] === 'ALTA') $badge_class = 'badge-alta';
-                                elseif ($row['accion'] === 'ELIMINACION') $badge_class = 'badge-eliminacion';
+                                elseif ($row['accion'] === 'ELIMINACION' || $row['accion'] === 'BAJA') $badge_class = 'badge-eliminacion';
                                 elseif ($row['accion'] === 'NOTA') $badge_class = 'badge-nota';
                             ?>
                             <tr data-search="<?= htmlspecialchars($search_str) ?>" data-date="<?= substr($row['fecha'], 0, 10) ?>">
