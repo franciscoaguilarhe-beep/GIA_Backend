@@ -185,7 +185,7 @@ try {
         }
 
         // Audit fields
-        if ($table !== 'unidades' && $table !== 'empleados') {
+        if (in_array('modificado_por', $valid_columns)) {
             $final_data['modificado_por'] = $_SESSION['user_id'] ?? 1;
         }
 
@@ -214,6 +214,7 @@ try {
                 $error_count++;
             }
         } catch (PDOException $e) {
+            file_put_contents('import_errors.log', $e->getMessage() . "\n", FILE_APPEND);
             $error_count++;
         }
     }
