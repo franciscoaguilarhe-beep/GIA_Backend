@@ -28,6 +28,7 @@ switch($cat) {
     case 'telefonia': $table = 'telefonos'; break;
     case 'redes': $table = 'redes'; break;
     case 'consumibles': $table = 'consumibles'; break;
+    case 'monitores': $table = 'monitores'; break;
     case 'unidades': $table = 'unidades'; break;
     case 'empleados': $table = 'empleados'; break;
     default: 

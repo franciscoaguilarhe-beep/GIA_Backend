@@ -15,6 +15,7 @@ switch($cat) {
     case 'computo': $headers = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'usuario', 'cuenta_dominio', 'unidad', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'impresoras': $headers = ['tipo', 'serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'ip', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'televisiones': $headers = ['serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'uso', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
+    case 'monitores': $headers = ['serie', 'marca', 'modelo', 'proyecto', 'estatus', 'observaciones']; break;
     case 'telefonia': $headers = ['serie', 'fabricante', 'modelo', 'tipo', 'ip', 'nombre', 'extension', 'nodo', 'p_router', 'unidad', 'area', 'departamento', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'redes': $headers = ['tipo', 'serie', 'fabricante', 'modelo', 'num_puertos', 'ip_gestion', 'mac', 'nodo_uplink', 'unidad', 'area', 'estatus', 'observaciones']; break;
     case 'consumibles': $headers = ['tipo', 'categoria', 'longitud', 'cantidad_stock', 'unidad', 'estatus', 'observaciones']; break;

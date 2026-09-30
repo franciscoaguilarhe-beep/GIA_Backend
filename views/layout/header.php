@@ -33,11 +33,14 @@ $is_logged_in = isset($_SESSION['user_id']);
             <a href="inventario.php?cat=computo" title="Equipos de Cómputo" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'computo' ? 'active' : '' ?>">
                 <i class="ph ph-laptop"></i>
             </a>
+            <a href="inventario.php?cat=monitores" title="Monitores" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'monitores' ? 'active' : '' ?>">
+                <i class="ph ph-monitor"></i>
+            </a>
             <a href="inventario.php?cat=impresoras" title="Impresoras" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'impresoras' ? 'active' : '' ?>">
                 <i class="ph ph-printer"></i>
             </a>
             <a href="inventario.php?cat=televisiones" title="Televisiones" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'televisiones' ? 'active' : '' ?>">
-                <i class="ph ph-monitor"></i>
+                <i class="ph ph-monitor-play"></i>
             </a>
             <a href="inventario.php?cat=redes" title="Infraestructura de Red" class="<?= isset($_GET['cat']) && $_GET['cat'] == 'redes' ? 'active' : '' ?>">
                 <i class="ph ph-hard-drives"></i>
@@ -50,6 +53,9 @@ $is_logged_in = isset($_SESSION['user_id']);
             </a>
             <a href="historial_general.php" title="Historial y Auditoría" class="<?= basename($_SERVER['PHP_SELF']) == 'historial_general.php' ? 'active' : '' ?>">
                 <i class="ph ph-clock-counter-clockwise"></i>
+            </a>
+            <a href="informes.php" title="Informes" class="<?= basename($_SERVER['PHP_SELF']) == 'informes.php' ? 'active' : '' ?>">
+                <i class="ph ph-file-text"></i>
             </a>
             <a href="gestion_administrativa.php" title="Gestión Administrativa" class="<?= basename($_SERVER['PHP_SELF']) == 'gestion_administrativa.php' ? 'active' : '' ?>">
                 <i class="ph ph-gear"></i>

@@ -41,6 +41,11 @@ switch($cat) {
         $table = "consumibles"; 
         $columns = ['TIPO', 'CATEGORÍA', 'CANTIDAD STOCK', 'UNIDAD', 'ESTATUS'];
         break;
+    case 'monitores': 
+        $title = "Monitores"; 
+        $table = "monitores"; 
+        $columns = ['SERIE', 'ÁREA', 'DEPARTAMENTO', 'PROYECTO', 'ESTATUS'];
+        break;
     default:
         $title = "Equipos de Cómputo"; 
         $table = "equipos_computo"; 
@@ -57,17 +62,34 @@ $un_stmt->execute();
 $todas_unidades = $un_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener registros de la tabla actual
-$query = "SELECT t.*, u.unidad as nombre_unidad ";
+$query = "SELECT t.* ";
+
+if ($cat !== 'monitores') {
+    $query .= ", u.unidad as nombre_unidad ";
+}
+
 if ($cat === 'computo') {
     $query .= ", e.nombre as nombre_usuario, e.matricula as matricula_usuario, COALESCE(NULLIF(e.usuario, ''), t.cuenta_dominio) as cuenta ";
+} elseif ($cat === 'monitores') {
+    $query .= ", ec.area as cpu_area, ec.departamento as cpu_departamento ";
 }
-$query .= " FROM $table t LEFT JOIN unidades u ON t.id_unidad = u.id ";
+
+$query .= " FROM $table t ";
+
+if ($cat !== 'monitores') {
+    $query .= " LEFT JOIN unidades u ON t.id_unidad = u.id ";
+}
+
 if ($cat === 'computo') {
     $query .= " LEFT JOIN empleados e ON t.id_usuario = e.id ";
+} elseif ($cat === 'monitores') {
+    $query .= " LEFT JOIN equipos_computo ec ON ec.monitor = t.serie ";
 }
-if ($filtro_unidad) {
+
+if ($filtro_unidad && $cat !== 'monitores') {
     $query .= " WHERE t.id_unidad = :id_u";
 }
+
 if ($cat === 'telefonia') {
     $query .= " ORDER BY CAST(t.extension AS UNSIGNED) ASC, t.extension ASC";
 } else {
@@ -75,7 +97,7 @@ if ($cat === 'telefonia') {
 }
 
 $stmt = $db->prepare($query);
-if ($filtro_unidad) {
+if ($filtro_unidad && $cat !== 'monitores') {
     $stmt->bindParam(':id_u', $filtro_unidad);
 }
 $stmt->execute();
@@ -132,6 +154,11 @@ switch($cat) {
     case 'consumibles':
         $stats_blocks['Tipo'] = getStats($db, $table, "tipo", 0, $filtro_unidad);
         $stats_blocks['Categoría'] = getStats($db, $table, "categoria", 0, $filtro_unidad);
+        break;
+    case 'monitores':
+        $stats_blocks['Estatus'] = getStats($db, $table, "estatus", 0, null);
+        $stats_blocks['Proyecto'] = getStats($db, $table, "proyecto", 0, null);
+        $stats_blocks['Modelo'] = getStats($db, $table, "modelo", 0, null);
         break;
 }
 
@@ -314,6 +341,12 @@ $total_global = count($records);
                                     <td><?= htmlspecialchars($row['categoria'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['cantidad_stock'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['estatus'] ?? '') ?></td>
+                                <?php elseif($cat == 'monitores'): ?>
+                                    <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
+                                    <td><?= htmlspecialchars(!empty($row['cpu_area']) ? $row['cpu_area'] : 'Sin Asignar') ?></td>
+                                    <td><?= htmlspecialchars(!empty($row['cpu_departamento']) ? $row['cpu_departamento'] : 'Sin Asignar') ?></td>
+                                    <td><?= htmlspecialchars($row['proyecto'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['estatus'] ?? '') ?></td>
                                 <?php endif; ?>
                             </tr>

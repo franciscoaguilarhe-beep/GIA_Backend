@@ -400,7 +400,8 @@ function getIconForCategory(cat) {
     switch(cat) {
         case 'computo': return 'ph-laptop';
         case 'impresoras': return 'ph-printer';
-        case 'televisiones': return 'ph-monitor';
+        case 'televisiones': return 'ph-monitor-play';
+        case 'monitores': return 'ph-monitor';
         case 'telefonia': return 'ph-phone';
         case 'red': 
         case 'redes': return 'ph-hard-drives';
@@ -582,6 +583,21 @@ function renderModalContent(data, categoria, container) {
                 fields: ['tipo', 'categoria', 'longitud', 'cantidad_stock', 'unidad', 'estatus', 'observaciones']
             }
         };
+    } else if (categoria === 'monitores') {
+        sections = {
+            'Datos Generales': {
+                icon: 'ph-monitor',
+                fields: ['serie', 'marca', 'modelo']
+            },
+            'Equipo Asociado (Solo Lectura)': {
+                icon: 'ph-link',
+                fields: ['equipo_asociado', 'unidad', 'area', 'departamento']
+            },
+            'Movimientos': {
+                icon: 'ph-arrows-left-right',
+                fields: ['estatus', 'proyecto', 'observaciones']
+            }
+        };
     } else if (categoria === 'empleados') {
         sections = {
             'Datos Generales': {
@@ -622,21 +638,33 @@ function renderModalContent(data, categoria, container) {
                 const val = data[field] || 'N/A';
                 const label = labelMap[field] || field.replace(/_/g, ' ').toUpperCase();
                 const isFullWidth = (field === 'observaciones');
+                const isReadonly = ['equipo_asociado', 'unidad', 'area', 'departamento'].includes(field) && categoria === 'monitores';
+
                 sectionHtml += `
                     <div class="form-group field-${field} ${isFullWidth ? 'full-width' : ''}">
                         <label>${label}</label>
-                        <div class="form-value">${val}</div>
-                        ${field === 'unidad' && categoria !== 'unidades' ? `
+                        <div class="form-value">${val}</div>`;
+                
+                if (isReadonly) {
+                    sectionHtml += `
+                        <input type="text" data-field="${field}" value="${val !== 'N/A' ? val : ''}" readonly style="background-color: var(--bg-surface); cursor: not-allowed; color: var(--text-muted);">
+                    `;
+                } else if (field === 'unidad' && categoria !== 'unidades') {
+                    sectionHtml += `
                             <select name="${field}" data-field="${field}">
                                 <option value="">Seleccione Unidad...</option>
                                 ${window.globalUnidades ? window.globalUnidades.map(u => `
                                     <option value="${u.unidad}" ${u.unidad === val ? 'selected' : ''}>${u.unidad}</option>
                                 `).join('') : `<option value="${val}">${val}</option>`}
                             </select>
-                        ` : `
+                        `;
+                } else {
+                    sectionHtml += `
                             <input type="text" name="${field}" data-field="${field}" value="${val !== 'N/A' ? val : ''}">
-                        `}
-                    </div>`;
+                        `;
+                }
+                
+                sectionHtml += `</div>`;
                 unassignedKeys = unassignedKeys.filter(k => k !== field);
             }
         });
@@ -1076,6 +1104,7 @@ function openAddModal(categoria) {
         case 'telefonia': fields = ['serie', 'fabricante', 'modelo', 'tipo', 'ip', 'nombre', 'extension', 'nodo', 'p_router', 'unidad', 'area', 'departamento', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
         case 'redes': fields = ['tipo', 'serie', 'fabricante', 'modelo', 'num_puertos', 'ip_gestion', 'mac', 'nodo_uplink', 'unidad', 'area', 'estatus', 'observaciones']; break;
         case 'consumibles': fields = ['tipo', 'categoria', 'longitud', 'cantidad_stock', 'unidad', 'estatus', 'observaciones']; break;
+        case 'monitores': fields = ['serie', 'marca', 'modelo', 'proyecto', 'estatus', 'observaciones']; break;
         case 'unidades': fields = ['clave', 'unidad', 'zona']; break;
         case 'empleados': fields = ['matricula', 'nombre', 'usuario', 'password', 'categoria', 'unidad']; break;
     }

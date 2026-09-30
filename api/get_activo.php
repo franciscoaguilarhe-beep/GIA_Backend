@@ -24,6 +24,7 @@ switch($cat) {
     case 'telefonia': $table = 'telefonos'; break;
     case 'redes': $table = 'redes'; break;
     case 'consumibles': $table = 'consumibles'; break;
+    case 'monitores': $table = 'monitores'; break;
     case 'unidades': $table = 'unidades'; break;
     case 'empleados': $table = 'empleados'; break;
     default: 
@@ -39,14 +40,29 @@ try {
     if ($cat === 'unidades') {
         $query = "SELECT * FROM $table t";
     } else {
-        $query = "SELECT t.*, u.unidad as unidad ";
+        $query = "SELECT t.* ";
+        
+        if ($cat !== 'monitores') {
+            $query .= ", u.unidad as unidad ";
+        }
+        
         if ($cat === 'computo') {
             $query .= ", e.matricula as matricula, e.nombre as nombre, e.categoria as categoria_usuario, 
                       COALESCE(NULLIF(e.usuario, ''), t.cuenta_dominio) as cuenta_dominio ";
+        } elseif ($cat === 'monitores') {
+            $query .= ", ec.area as cpu_area, ec.departamento as cpu_departamento, u_ec.unidad as cpu_unidad, ec.nombre_equipo as equipo_asociado ";
         }
-        $query .= " FROM $table t LEFT JOIN unidades u ON t.id_unidad = u.id ";
+        
+        $query .= " FROM $table t ";
+        
+        if ($cat !== 'monitores') {
+            $query .= " LEFT JOIN unidades u ON t.id_unidad = u.id ";
+        }
+        
         if ($cat === 'computo') {
             $query .= " LEFT JOIN empleados e ON t.id_usuario = e.id ";
+        } elseif ($cat === 'monitores') {
+            $query .= " LEFT JOIN equipos_computo ec ON ec.monitor = t.serie LEFT JOIN unidades u_ec ON ec.id_unidad = u_ec.id ";
         }
     }
     
@@ -56,10 +72,26 @@ try {
     $stmt->bindParam(':id', $id);
     $stmt->execute();
     
-    if($stmt->rowCount() > 0) {
+        if($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         unset($row['id_unidad']);
         unset($row['id_usuario']);
+        
+        if ($cat === 'monitores') {
+            if (!empty($row['equipo_asociado'])) {
+                $row['area'] = $row['cpu_area'] ?: 'N/A';
+                $row['departamento'] = $row['cpu_departamento'] ?: 'N/A';
+                $row['unidad'] = $row['cpu_unidad'] ?: 'N/A';
+            } else {
+                $row['area'] = 'Sin asignar';
+                $row['departamento'] = 'Sin asignar';
+                $row['unidad'] = 'Sin asignar';
+            }
+            // Remove the DB columns so they don't show up in "Otros Datos"
+            unset($row['cpu_area'], $row['cpu_departamento'], $row['cpu_unidad']);
+            // Also unset internal timestamps to avoid them showing in "Otros Datos"
+            unset($row['created_at'], $row['updated_at']);
+        }
 
         // Función para limpiar caracteres no UTF-8 que rompen json_encode
         array_walk_recursive($row, function(&$item) {
