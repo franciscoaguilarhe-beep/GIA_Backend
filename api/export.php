@@ -20,8 +20,8 @@ $query = "";
 
 switch($cat) {
     case 'computo': 
-        $headers = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'usuario', 'cuenta', 'unidad', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones'];
-        $query = "SELECT t.serie, t.tipo, t.nombre_equipo, t.fabricante, t.modelo, t.monitor, t.tipo_alm, t.capacidad, t.ram, t.ip, t.mac_net, t.mac_wifi, t.nodo, t.p_router, 
+        $headers = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'usuario', 'cuenta', 'unidad', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones'];
+        $query = "SELECT t.serie, t.tipo, t.nombre_equipo, t.fabricante, t.modelo, t.monitor, t.monitor_secundario, t.tipo_alm, t.capacidad, t.ram, t.ip, t.mac_net, t.mac_wifi, t.nodo, t.p_router, 
                   e.nombre as usuario,
                   COALESCE(NULLIF(e.usuario, ''), t.cuenta_dominio) as cuenta,
                   u.unidad as unidad, t.area, t.departamento, t.extension, t.proyecto, t.fecha_instalacion, t.fecha_retiro, t.estatus, t.observaciones 

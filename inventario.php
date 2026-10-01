@@ -83,7 +83,7 @@ if ($cat !== 'monitores') {
 if ($cat === 'computo') {
     $query .= " LEFT JOIN empleados e ON t.id_usuario = e.id ";
 } elseif ($cat === 'monitores') {
-    $query .= " LEFT JOIN equipos_computo ec ON ec.monitor = t.serie ";
+    $query .= " LEFT JOIN equipos_computo ec ON (ec.monitor = t.serie OR ec.monitor_secundario = t.serie) ";
 }
 
 if ($filtro_unidad && $cat !== 'monitores') {

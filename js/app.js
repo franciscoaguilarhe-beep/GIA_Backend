@@ -500,7 +500,7 @@ function renderModalContent(data, categoria, container) {
     let sections = {
         'Datos Generales': {
             icon: 'ph-info',
-            fields: ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor']
+            fields: ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario']
         },
         'Datos Técnicos': {
             icon: 'ph-cpu',
@@ -524,7 +524,7 @@ function renderModalContent(data, categoria, container) {
         sections = {
             'Datos Generales': {
                 icon: 'ph-info',
-                fields: ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor']
+                fields: ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario']
             },
             'Datos Técnicos': {
                 icon: 'ph-cpu',
@@ -660,6 +660,7 @@ function renderModalContent(data, categoria, container) {
         'cuenta_dominio': 'CUENTA',
         'categoria_usuario': 'CATEGORIA',
         'tipo_alm': 'TIPO DE ALMACENAMIENTO',
+        'monitor_secundario': 'MONITOR SECUNDARIO',
         'p_router': 'PUERTO ROUTER',
         'num_puertos': '# DE PUERTOS',
         'ip_gestion': 'IP',
@@ -679,11 +680,19 @@ function renderModalContent(data, categoria, container) {
                 const isFullWidth = (field === 'observaciones');
                 const isReadonly = ['equipo_asociado', 'unidad', 'area', 'departamento'].includes(field) && categoria === 'monitores';
 
+                // Monitor secundario: oculto si no tiene valor
+                const isMonitorSec = (field === 'monitor_secundario' && categoria === 'computo');
+                const monSecHidden = isMonitorSec && (!data[field] || data[field] === 'N/A' || data[field] === '');
+
+                // Botón "+" en la etiqueta MONITOR para agregar monitor secundario
+                const isMonitorPrimary = (field === 'monitor' && categoria === 'computo');
+                const hasMonSec = isMonitorPrimary && data['monitor_secundario'] && data['monitor_secundario'] !== 'N/A' && data['monitor_secundario'] !== '';
+
                 sectionHtml += `
-                    <div class="form-group field-${field} ${isFullWidth ? 'full-width' : ''}">
-                        <label>${label}</label>
+                    <div class="form-group field-${field} ${isFullWidth ? 'full-width' : ''}" ${monSecHidden ? 'style="display:none;"' : ''}>
+                        <label>${label}${isMonitorPrimary && !hasMonSec ? '<button type="button" class="btn-add-monitor-sec" onclick="toggleMonitorSecundario(true)" title="Agregar monitor secundario" style="margin-left:6px; background:none; border:none; color:var(--primary-color); cursor:pointer; font-size:14px; display:inline-flex; align-items:center;"><i class="ph ph-plus-circle"></i></button>' : ''}${isMonitorSec ? '<button type="button" class="btn-remove-monitor-sec" onclick="toggleMonitorSecundario(false)" title="Quitar monitor secundario" style="margin-left:6px; background:none; border:none; color:var(--danger-color); cursor:pointer; font-size:14px; display:inline-flex; align-items:center;"><i class="ph ph-minus-circle"></i></button>' : ''}</label>
                         <div class="form-value">${val}</div>`;
-                
+
                 if (isReadonly) {
                     sectionHtml += `
                         <input type="text" data-field="${field}" value="${val !== 'N/A' ? val : ''}" readonly style="background-color: var(--bg-surface); cursor: not-allowed; color: var(--text-muted);">
@@ -790,6 +799,23 @@ function renderModalContent(data, categoria, container) {
                 }
             }
         });
+    }
+}
+
+// ---- Toggle Monitor Secundario ----
+function toggleMonitorSecundario(show) {
+    const monSecField = document.querySelector('.field-monitor_secundario');
+    const addBtn = document.querySelector('.field-monitor .btn-add-monitor-sec');
+    if (show) {
+        if (monSecField) monSecField.style.display = 'flex';
+        if (addBtn) addBtn.style.display = 'none';
+    } else {
+        if (monSecField) {
+            monSecField.style.display = 'none';
+            const input = monSecField.querySelector('input[name="monitor_secundario"]');
+            if (input) input.value = '';
+        }
+        if (addBtn) addBtn.style.display = '';
     }
 }
 
@@ -1137,7 +1163,7 @@ function openAddModal(categoria) {
 
     let fields = [];
     switch(categoria) {
-        case 'computo': fields = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'matricula', 'nombre', 'cuenta_dominio', 'categoria_usuario', 'unidad', 'area', 'departamento', 'extension', 'estatus', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'observaciones']; break;
+        case 'computo': fields = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'matricula', 'nombre', 'cuenta_dominio', 'categoria_usuario', 'unidad', 'area', 'departamento', 'extension', 'estatus', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'observaciones']; break;
         case 'impresoras': fields = ['tipo', 'serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'ip', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
         case 'televisiones': fields = ['serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'uso', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
         case 'telefonia': fields = ['serie', 'fabricante', 'modelo', 'tipo', 'ip', 'nombre', 'extension', 'nodo', 'p_router', 'unidad', 'area', 'departamento', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
@@ -1176,7 +1202,7 @@ function openImportModal(categoria) {
 function downloadTemplate(categoria) {
     let headers = [];
     switch(categoria) {
-        case 'computo': headers = ['serie', 'tipo', 'fabricante', 'modelo', 'monitor', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'estatus', 'observaciones']; break;
+        case 'computo': headers = ['serie', 'tipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'estatus', 'observaciones']; break;
         case 'impresoras': headers = ['tipo', 'serie', 'fabricante', 'modelo', 'area', 'departamento', 'ip', 'fecha_instalacion', 'estatus', 'observaciones']; break;
         case 'televisiones': headers = ['serie', 'fabricante', 'modelo', 'area', 'departamento', 'uso', 'fecha_instalacion', 'estatus', 'observaciones']; break;
         case 'telefonia': headers = ['serie', 'fabricante', 'modelo', 'tipo', 'ip', 'nombre', 'extension', 'nodo', 'p_router', 'area', 'departamento', 'fecha_instalacion', 'estatus', 'observaciones']; break;

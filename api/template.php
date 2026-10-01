@@ -12,7 +12,7 @@ $cat = isset($_GET['cat']) ? $_GET['cat'] : 'computo';
 
 $headers = [];
 switch($cat) {
-    case 'computo': $headers = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'usuario', 'cuenta_dominio', 'unidad', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
+    case 'computo': $headers = ['serie', 'tipo', 'nombre_equipo', 'fabricante', 'modelo', 'monitor', 'monitor_secundario', 'tipo_alm', 'capacidad', 'ram', 'ip', 'mac_net', 'mac_wifi', 'nodo', 'p_router', 'usuario', 'cuenta_dominio', 'unidad', 'area', 'departamento', 'extension', 'proyecto', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'impresoras': $headers = ['tipo', 'serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'ip', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'televisiones': $headers = ['serie', 'fabricante', 'modelo', 'unidad', 'area', 'departamento', 'uso', 'fecha_instalacion', 'fecha_retiro', 'estatus', 'observaciones']; break;
     case 'monitores': $headers = ['serie', 'marca', 'modelo', 'proyecto', 'estatus', 'observaciones']; break;
