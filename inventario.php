@@ -34,7 +34,7 @@ switch($cat) {
     case 'redes': 
         $title = "Infraestructura de Red"; 
         $table = "redes"; 
-        $columns = ['SERIE', 'TIPO', 'UNIDAD', 'IP GESTIÓN'];
+        $columns = ['TIPO', 'SERIE', 'FABRICANTE', 'MODELO', '# PUERTOS', 'IP', 'MAC', 'UNIDAD', 'AREA', 'OBSERVACIONES'];
         break;
     case 'consumibles': 
         $title = "Consumibles"; 
@@ -246,7 +246,7 @@ $total_global = count($records);
         </div>
 
         <div class="table-container">
-            <table>
+            <table class="table-<?= $cat ?>">
                 <thead>
                     <tr>
                         <?php foreach($columns as $col): ?>
@@ -293,7 +293,11 @@ $total_global = count($records);
                                     'uso' => $row['uso'] ?? '',
                                     'categoria' => $row['categoria'] ?? '',
                                     'nombre' => $row['nombre'] ?? '',
-                                    'extension' => $row['extension'] ?? ''
+                                    'extension' => $row['extension'] ?? '',
+                                    'mac' => $row['mac'] ?? '',
+                                    'ip_gestion' => $row['ip_gestion'] ?? '',
+                                    'observaciones' => $row['observaciones'] ?? '',
+                                    'num_puertos' => $row['num_puertos'] ?? ''
                                 ];
 
                                 $search_tags = [];
@@ -332,10 +336,41 @@ $total_global = count($records);
                                     <td><?= htmlspecialchars($row['nombre'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['extension'] ?? '') ?></td>
                                 <?php elseif($cat == 'redes'): ?>
+                                    <?php 
+                                        $tipo_full = $row['tipo'] ?? '';
+                                        $tipo_map = [
+                                            'SWITCH' => 'SW',
+                                            'ROUTER' => 'RO',
+                                            'ACCESS POINT' => 'AP',
+                                            'FIREWALL' => 'FW',
+                                            'SERVIDOR' => 'SV',
+                                            'MODEM' => 'MO',
+                                            'HUB' => 'HU',
+                                            'BRIDGE' => 'BR',
+                                            'GATEWAY' => 'GW',
+                                            'ANTENA' => 'AN',
+                                            'RADIO' => 'RA',
+                                            'CONVERTIDOR' => 'CO',
+                                            'TRANSCEIVER' => 'TR',
+                                            'REPETIDOR' => 'RE',
+                                            'MEDIA CONVERTER' => 'MC',
+                                            'PATCH PANEL' => 'PP',
+                                        ];
+                                        $tipo_upper = strtoupper(trim($tipo_full));
+                                        $tipo_abbr = isset($tipo_map[$tipo_upper]) ? $tipo_map[$tipo_upper] : strtoupper(substr($tipo_full, 0, 2));
+                                        $obs_text = $row['observaciones'] ?? '';
+                                        $obs_short = mb_strlen($obs_text) > 30 ? mb_substr($obs_text, 0, 27) . '...' : $obs_text;
+                                    ?>
+                                    <td title="<?= htmlspecialchars($tipo_full) ?>"><?= htmlspecialchars($tipo_abbr) ?></td>
                                     <td><strong><?= htmlspecialchars($row['serie'] ?? '') ?></strong></td>
-                                    <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
-                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['fabricante'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['modelo'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['num_puertos'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['ip_gestion'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['mac'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['nombre_unidad'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['area'] ?? '') ?></td>
+                                    <td class="col-observaciones" title="<?= htmlspecialchars($obs_text) ?>"><?= htmlspecialchars($obs_short) ?></td>
                                 <?php elseif($cat == 'consumibles'): ?>
                                     <td><?= htmlspecialchars($row['tipo'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['categoria'] ?? '') ?></td>

@@ -1313,3 +1313,59 @@ tr:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* ==========================================================
+   TABLA DE INFRAESTRUCTURA DE RED - Compacta estilo Excel
+   ========================================================== */
+.table-redes {
+    min-width: unset !important;
+    width: 100% !important;
+    table-layout: fixed;
+}
+
+.table-redes th,
+.table-redes td {
+    font-size: 0.75rem !important;
+    padding: 8px 6px !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Column widths for redes - TIPO, SERIE, FABRICANTE, MODELO, #PUERTOS, IP, MAC, UNIDAD, AREA, OBSERVACIONES */
+.table-redes th:nth-child(1),
+.table-redes td:nth-child(1) { width: 40px; text-align: center; }  /* TIPO (2 letras) */
+
+.table-redes th:nth-child(2),
+.table-redes td:nth-child(2) { width: 13%; }  /* SERIE */
+
+.table-redes th:nth-child(3),
+.table-redes td:nth-child(3) { width: 10%; }  /* FABRICANTE */
+
+.table-redes th:nth-child(4),
+.table-redes td:nth-child(4) { width: 10%; }  /* MODELO */
+
+.table-redes th:nth-child(5),
+.table-redes td:nth-child(5) { width: 55px; text-align: center; }  /* # PUERTOS */
+
+.table-redes th:nth-child(6),
+.table-redes td:nth-child(6) { width: 10%; }  /* IP */
+
+.table-redes th:nth-child(7),
+.table-redes td:nth-child(7) { width: 12%; }  /* MAC */
+
+.table-redes th:nth-child(8),
+.table-redes td:nth-child(8) { width: 10%; }  /* UNIDAD */
+
+.table-redes th:nth-child(9),
+.table-redes td:nth-child(9) { width: 10%; }  /* AREA */
+
+.table-redes th:nth-child(10),
+.table-redes td:nth-child(10) { width: 15%; }  /* OBSERVACIONES */
+
+.col-observaciones {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
